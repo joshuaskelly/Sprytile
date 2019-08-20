@@ -36,7 +36,7 @@ class DataObjectDict(dict):
             raise AttributeError("No such attribute: " + name)
 
 
-class SprytileModalTool(bpy.types.Operator):
+class SPRYTILE_OT_ModalTool(bpy.types.Operator):
     """Tile based mesh creation/UV layout tool"""
     bl_idname = "sprytile.modal_tool"
     bl_label = "Sprytile Paint"
@@ -47,7 +47,7 @@ class SprytileModalTool(bpy.types.Operator):
     preview_is_quads = True
     no_undo = False
 
-    modal_map = bpy.props.EnumProperty(
+    modal_map: bpy.props.EnumProperty(
         items=[
             ("SNAP", "Snap Cursor", "", 1),
             ("FOCUS", "Focus on Cursor", "", 2),
@@ -56,6 +56,8 @@ class SprytileModalTool(bpy.types.Operator):
         ],
         name="Sprytile Paint Modal Map"
     )
+
+    refresh_mesh: bpy.props.BoolProperty(default=False)
 
     keymaps = {}
     modal_values = []
@@ -92,7 +94,7 @@ class SprytileModalTool(bpy.types.Operator):
         scene = context.scene
         if scene.sprytile_data.lock_normal is True:
             return
-        plane_normal, up_vector = SprytileModalTool.calculate_view_axis(context)
+        plane_normal, up_vector = SPRYTILE_OT_ModalTool.calculate_view_axis(context)
         if plane_normal is None:
             return
 
@@ -374,14 +376,14 @@ class SprytileModalTool(bpy.types.Operator):
         :param is_quads:
         :return:
         """
-        SprytileModalTool.preview_verts = verts
-        SprytileModalTool.preview_uvs = uvs
-        SprytileModalTool.preview_is_quads = is_quads
+        SPRYTILE_OT_ModalTool.preview_verts = verts
+        SPRYTILE_OT_ModalTool.preview_uvs = uvs
+        SPRYTILE_OT_ModalTool.preview_is_quads = is_quads
 
     def clear_preview_data(self):
-        SprytileModalTool.preview_verts = None
-        SprytileModalTool.preview_uvs = None
-        SprytileModalTool.preview_is_quads = True
+        SPRYTILE_OT_ModalTool.preview_verts = None
+        SPRYTILE_OT_ModalTool.preview_uvs = None
+        SPRYTILE_OT_ModalTool.preview_is_quads = True
 
 
     @staticmethod
@@ -791,8 +793,8 @@ class SprytileModalTool(bpy.types.Operator):
             self.exit_modal(context)
             return {'CANCELLED'}
 
-        if SprytileModalTool.no_undo and sprytile_data.is_grid_translate is False:
-            SprytileModalTool.no_undo = False
+        if SPRYTILE_OT_ModalTool.no_undo and sprytile_data.is_grid_translate is False:
+            SPRYTILE_OT_ModalTool.no_undo = False
 
         if event.type == 'TIMER':
             view_axis = self.find_view_axis(context)
@@ -816,6 +818,9 @@ class SprytileModalTool(bpy.types.Operator):
 
         # Refreshing the mesh, preview needs constantly refreshed
         # mesh or bad things seem to happen. This can potentially get expensive
+
+        print(self.refresh_mesh)
+
         if self.refresh_mesh or self.bmesh.is_valid is False or draw_preview:
             self.update_bmesh_tree(context, True)
             self.refresh_mesh = False
@@ -833,7 +838,7 @@ class SprytileModalTool(bpy.types.Operator):
         # If outside the region, pass through
         if out_of_region:
             # If preview data exists, clear it
-            if SprytileModalTool.preview_verts is not None:
+            if SPRYTILE_OT_ModalTool.preview_verts is not None:
                 self.clear_preview_data()
             return {'PASS_THROUGH'}
 
@@ -854,8 +859,8 @@ class SprytileModalTool(bpy.types.Operator):
         self.draw_preview = draw_preview and self.refresh_mesh is False
         # Clear preview data if not drawing preview
         if not self.draw_preview:
-            SprytileModalTool.preview_verts = None
-            SprytileModalTool.preview_uvs = None
+            SPRYTILE_OT_ModalTool.preview_verts = None
+            SPRYTILE_OT_ModalTool.preview_uvs = None
 
         # Build the data that will be used by tool observers
         region = context.region
@@ -899,14 +904,14 @@ class SprytileModalTool(bpy.types.Operator):
                 self.cursor_move_layer(context, direction)
                 return {'RUNNING_MODAL'}
         # no_undo flag is up, process no other mouse events until it is cleared
-        if SprytileModalTool.no_undo:
+        if SPRYTILE_OT_ModalTool.no_undo:
             # print("No undo flag is on", event.type, event.value)
             clear_types = {'LEFTMOUSE', 'RIGHTMOUSE'}
             if event.type in clear_types and event.value == 'RELEASE':
                 print("Clearing no undo")
                 self.refresh_mesh = True
-                SprytileModalTool.no_undo = False
-            return {'PASS_THROUGH'} if SprytileModalTool.no_undo else {'RUNNING_MODAL'}
+                SPRYTILE_OT_ModalTool.no_undo = False
+            return {'PASS_THROUGH'} if SPRYTILE_OT_ModalTool.no_undo else {'RUNNING_MODAL'}
         elif event.type == 'LEFTMOUSE':
             check_modifier = False
             addon_prefs = context.user_preferences.addons[__package__].preferences
@@ -922,7 +927,7 @@ class SprytileModalTool(bpy.types.Operator):
                 self.find_face_tile(context, event)
             return {'RUNNING_MODAL'}
         elif event.type == 'MOUSEMOVE':
-            if draw_preview and not SprytileModalTool.no_undo and event.type not in self.is_keyboard_list:
+            if draw_preview and not SPRYTILE_OT_ModalTool.no_undo and event.type not in self.is_keyboard_list:
                 self.draw_preview = True
             if context.scene.sprytile_data.is_snapping:
                 self.cursor_snap(context, event)
@@ -950,9 +955,9 @@ class SprytileModalTool(bpy.types.Operator):
                 continue
             # print("Special key is", arg)
             if arg == 'move_sel':
-                SprytileModalTool.preview_uvs = None
-                SprytileModalTool.preview_verts = None
-                SprytileModalTool.no_undo = True
+                SPRYTILE_OT_ModalTool.preview_uvs = None
+                SPRYTILE_OT_ModalTool.preview_verts = None
+                SPRYTILE_OT_ModalTool.no_undo = True
                 bpy.ops.sprytile.translate_grid('INVOKE_REGION_WIN')
                 return {'RUNNING_MODAL'}
             if arg == 'sel_mesh':
@@ -1015,7 +1020,7 @@ class SprytileModalTool(bpy.types.Operator):
             return {'CANCELLED'}
 
         obj = context.object
-        if obj.hide or obj.type != 'MESH':
+        if obj.hide_get() or obj.type != 'MESH':
             self.report({'WARNING'}, "Active object must be a visible mesh")
             return {'CANCELLED'}
         if len(context.scene.sprytile_mats) < 1:
@@ -1031,11 +1036,11 @@ class SprytileModalTool(bpy.types.Operator):
         if use_default_grid_id:
             obj.sprytile_gridid = context.scene.sprytile_mats[0].grids[0].id
 
-        if context.space_data.viewport_shade != 'MATERIAL':
-            context.space_data.viewport_shade = 'MATERIAL'
+        #if context.space_data.viewport_shade != 'MATERIAL':
+        #    context.space_data.viewport_shade = 'MATERIAL'
 
         self.virtual_cursor = deque([], 3)
-        SprytileModalTool.no_undo = False
+        SPRYTILE_OT_ModalTool.no_undo = False
         self.left_down = False
         self.update_bmesh_tree(context)
         self.refresh_mesh = False
@@ -1056,7 +1061,7 @@ class SprytileModalTool(bpy.types.Operator):
 
         # Set up timer callback
         win_mgr = context.window_manager
-        self.view_axis_timer = win_mgr.event_timer_add(0.1, context.window)
+        self.view_axis_timer = win_mgr.event_timer_add(0.1, window=context.window)
 
         self.setup_user_keys(context)
         win_mgr.modal_handler_add(self)
@@ -1135,12 +1140,8 @@ class SprytileModalTool(bpy.types.Operator):
 
 
 def register():
-    bpy.utils.register_module(__name__)
+    bpy.utils.register_class(SPRYTILE_OT_ModalTool)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
-
-
-if __name__ == '__main__':
-    register()
+    bpy.utils.unregister_class(SPRYTILE_OT_ModalTool)

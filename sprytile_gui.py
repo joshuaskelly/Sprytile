@@ -10,16 +10,16 @@ from . import sprytile_utils, sprytile_modal
 
 
 class SprytileGuiData(bpy.types.PropertyGroup):
-    zoom = FloatProperty(
+    zoom: FloatProperty(
         name="Sprytile UI zoom",
         default=1.0
     )
-    use_mouse = BoolProperty(name="GUI use mouse")
-    middle_btn = BoolProperty(name="GUI middle mouse")
-    is_dirty = BoolProperty(name="Srpytile GUI redraw flag")
+    use_mouse: BoolProperty(name="GUI use mouse")
+    middle_btn: BoolProperty(name="GUI middle mouse")
+    is_dirty: BoolProperty(name="Srpytile GUI redraw flag")
 
 
-class SprytileGui(bpy.types.Operator):
+class SPRYTILE_OT_Gui(bpy.types.Operator):
     bl_idname = "sprytile.gui_win"
     bl_label = "Sprytile GUI"
 
@@ -46,7 +46,7 @@ class SprytileGui(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Try to setup offscreen
-        setup_off_return = SprytileGui.setup_offscreen(self, context)
+        setup_off_return = SPRYTILE_OT_Gui.setup_offscreen(self, context)
         if setup_off_return is not None:
             return setup_off_return
 
@@ -56,7 +56,7 @@ class SprytileGui(bpy.types.Operator):
         self.handle_ui(context, event)
 
         # Add the draw handler call back, for drawing into viewport
-        SprytileGui.handler_add(self, context, context.region)
+        SPRYTILE_OT_Gui.handler_add(self, context, context.region)
 
         if context.area:
             context.area.tag_redraw()
@@ -75,9 +75,9 @@ class SprytileGui(bpy.types.Operator):
                 self.label_counter -= 1
 
         # Check if current_grid is different from current sprytile grid
-        if context.object.sprytile_gridid != SprytileGui.current_grid:
+        if context.object.sprytile_gridid != SPRYTILE_OT_Gui.current_grid:
             # Setup the offscreen texture for the new grid
-            setup_off_return = SprytileGui.setup_offscreen(self, context)
+            setup_off_return = SPRYTILE_OT_Gui.setup_offscreen(self, context)
             if setup_off_return is not None:
                 return setup_off_return
             # Skip redrawing on this frame
@@ -89,14 +89,14 @@ class SprytileGui(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
     def exit(self, context):
-        SprytileGui.handler_remove(self, context)
+        SPRYTILE_OT_Gui.handler_remove(self, context)
         context.area.tag_redraw()
 
     def set_zoom_level(self, context, zoom_shift):
         region = context.region
         zoom_level = context.scene.sprytile_ui.zoom
         zoom_level = self.calc_zoom(region, zoom_level, zoom_shift)
-        display_size = SprytileGui.display_size
+        display_size = SPRYTILE_OT_Gui.display_size
 
         calc_size = round(display_size[0] * zoom_level), round(display_size[1] * zoom_level)
         height_min = min(128, display_size[1])
@@ -135,14 +135,14 @@ class SprytileGui(bpy.types.Operator):
                     zoom -= 0.5
             count += step
 
-        if SprytileGui.display_size[1] > region.height:
-            zoom = min(region.height / SprytileGui.display_size[1], zoom)
+        if SPRYTILE_OT_Gui.display_size[1] > region.height:
+            zoom = min(region.height / SPRYTILE_OT_Gui.display_size[1], zoom)
 
         return zoom
 
     def get_zoom_level(self, context):
         region = context.region
-        display_size = SprytileGui.display_size
+        display_size = SPRYTILE_OT_Gui.display_size
         target_height = region.height * 0.35
 
         zoom_level = round(region.height / display_size[1])
@@ -167,10 +167,10 @@ class SprytileGui(bpy.types.Operator):
         obj = context.object
 
         tilegrid = sprytile_utils.get_grid(context, obj.sprytile_gridid)
-        tex_size = SprytileGui.tex_size
+        tex_size = SPRYTILE_OT_Gui.tex_size
 
         display_scale = context.scene.sprytile_ui.zoom
-        display_size = SprytileGui.display_size
+        display_size = SPRYTILE_OT_Gui.display_size
         display_size = round(display_size[0] * display_scale), round(display_size[1] * display_scale)
         display_pad = 5
 
@@ -231,14 +231,14 @@ class SprytileGui(bpy.types.Operator):
             else:
                 direction = 1 if 'DOWN' in event.type else -1
                 bpy.ops.sprytile.grid_cycle('INVOKE_REGION_WIN', direction=direction)
-                self.label_counter = SprytileGui.label_frames
+                self.label_counter = SPRYTILE_OT_Gui.label_frames
 
         if mouse_pt is not None and event.type in {'LEFTMOUSE', 'MOUSEMOVE'}:
             click_pos = Vector((mouse_pt.x - gui_min.x, mouse_pt.y - gui_min.y))
             ratio_pos = Vector((click_pos.x / display_size[0], click_pos.y / display_size[1]))
             tex_pos = Vector((ratio_pos.x * tex_size[0], ratio_pos.y * tex_size[1], 0))
             # Apply grid matrix to tex_pos
-            grid_matrix = sprytile_utils.get_grid_matrix(SprytileGui.loaded_grid)
+            grid_matrix = sprytile_utils.get_grid_matrix(SPRYTILE_OT_Gui.loaded_grid)
             tex_pos = grid_matrix.inverted() * tex_pos
 
             grid_max = Vector((ceil(tex_size[0]/tilegrid.grid[0])-1, ceil(tex_size[1]/tilegrid.grid[1])-1))
@@ -250,9 +250,9 @@ class SprytileGui(bpy.types.Operator):
             grid_pos.x = max(0, min(grid_max.x, floor(grid_pos.x)))
             grid_pos.y = max(0, min(grid_max.y, floor(grid_pos.y)))
 
-            SprytileGui.cursor_grid_pos = grid_pos
+            SPRYTILE_OT_Gui.cursor_grid_pos = grid_pos
 
-            if event.type == 'LEFTMOUSE' and event.value == 'PRESS' and SprytileGui.is_selecting is False:
+            if event.type == 'LEFTMOUSE' and event.value == 'PRESS' and SPRYTILE_OT_Gui.is_selecting is False:
                 addon_prefs = context.user_preferences.addons[__package__].preferences
                 move_mod_pressed = False
                 if addon_prefs.tile_sel_move_key == 'Alt':
@@ -262,17 +262,17 @@ class SprytileGui(bpy.types.Operator):
                 if addon_prefs.tile_sel_move_key == 'Shift':
                     move_mod_pressed = event.shift
 
-                SprytileGui.is_selecting = move_mod_pressed is False
-                SprytileGui.is_moving = move_mod_pressed is True
-                if SprytileGui.is_selecting or SprytileGui.is_moving:
-                    SprytileGui.sel_start = grid_pos
-                    SprytileGui.sel_origin = (tilegrid.tile_selection[0], tilegrid.tile_selection[1])
+                SPRYTILE_OT_Gui.is_selecting = move_mod_pressed is False
+                SPRYTILE_OT_Gui.is_moving = move_mod_pressed is True
+                if SPRYTILE_OT_Gui.is_selecting or SPRYTILE_OT_Gui.is_moving:
+                    SPRYTILE_OT_Gui.sel_start = grid_pos
+                    SPRYTILE_OT_Gui.sel_origin = (tilegrid.tile_selection[0], tilegrid.tile_selection[1])
 
-            if SprytileGui.is_moving:
-                move_delta = Vector((grid_pos.x - SprytileGui.sel_start.x, grid_pos.y - SprytileGui.sel_start.y))
+            if SPRYTILE_OT_Gui.is_moving:
+                move_delta = Vector((grid_pos.x - SPRYTILE_OT_Gui.sel_start.x, grid_pos.y - SPRYTILE_OT_Gui.sel_start.y))
                 # Restrict movement inside tile grid
-                move_min = (SprytileGui.sel_origin[0] + move_delta.x,
-                            SprytileGui.sel_origin[1] + move_delta.y)
+                move_min = (SPRYTILE_OT_Gui.sel_origin[0] + move_delta.x,
+                            SPRYTILE_OT_Gui.sel_origin[1] + move_delta.y)
                 if move_min[0] < 0:
                     move_delta.x -= move_min[0]
                 if move_min[1] < 0:
@@ -285,17 +285,17 @@ class SprytileGui(bpy.types.Operator):
                 if move_max[1] > grid_max.y:
                     move_delta.y -= (move_max[1] - grid_max.y)
 
-                tilegrid.tile_selection[0] = SprytileGui.sel_origin[0] + move_delta.x
-                tilegrid.tile_selection[1] = SprytileGui.sel_origin[1] + move_delta.y
+                tilegrid.tile_selection[0] = SPRYTILE_OT_Gui.sel_origin[0] + move_delta.x
+                tilegrid.tile_selection[1] = SPRYTILE_OT_Gui.sel_origin[1] + move_delta.y
 
-            if SprytileGui.is_selecting:
+            if SPRYTILE_OT_Gui.is_selecting:
                 sel_min = Vector((
-                    min(grid_pos.x, SprytileGui.sel_start.x),
-                    min(grid_pos.y, SprytileGui.sel_start.y)
+                    min(grid_pos.x, SPRYTILE_OT_Gui.sel_start.x),
+                    min(grid_pos.y, SPRYTILE_OT_Gui.sel_start.y)
                 ))
                 sel_max = Vector((
-                    max(grid_pos.x, SprytileGui.sel_start.x),
-                    max(grid_pos.y, SprytileGui.sel_start.y)
+                    max(grid_pos.x, SPRYTILE_OT_Gui.sel_start.x),
+                    max(grid_pos.y, SPRYTILE_OT_Gui.sel_start.y)
                 ))
 
                 tilegrid.tile_selection[0] = sel_min.x
@@ -304,25 +304,25 @@ class SprytileGui(bpy.types.Operator):
                 tilegrid.tile_selection[3] = (sel_max.y - sel_min.y) + 1
 
             do_release = event.type == 'LEFTMOUSE' and event.value == 'RELEASE'
-            if do_release and (SprytileGui.is_selecting or SprytileGui.is_moving):
-                SprytileGui.is_selecting = False
-                SprytileGui.is_moving = False
-                SprytileGui.sel_start = None
-                SprytileGui.sel_origin = None
+            if do_release and (SPRYTILE_OT_Gui.is_selecting or SPRYTILE_OT_Gui.is_moving):
+                SPRYTILE_OT_Gui.is_selecting = False
+                SPRYTILE_OT_Gui.is_moving = False
+                SPRYTILE_OT_Gui.sel_start = None
+                SPRYTILE_OT_Gui.sel_origin = None
 
         # Cycle through grids on same material when right click
         if event.type == 'RIGHTMOUSE' and event.value == 'PRESS':
             bpy.ops.sprytile.grid_cycle()
-            self.label_counter = SprytileGui.label_frames
+            self.label_counter = SPRYTILE_OT_Gui.label_frames
 
     # ==================
     # Actual GUI drawing
     # ==================
     @staticmethod
     def setup_offscreen(self, context):
-        SprytileGui.offscreen = SprytileGui.setup_gpu_offscreen(self, context)
-        if SprytileGui.offscreen:
-            SprytileGui.texture = SprytileGui.offscreen.color_texture
+        SPRYTILE_OT_Gui.offscreen = SPRYTILE_OT_Gui.setup_gpu_offscreen(self, context)
+        if SPRYTILE_OT_Gui.offscreen:
+            SPRYTILE_OT_Gui.texture = SPRYTILE_OT_Gui.offscreen.color_texture
         else:
             self.report({'ERROR'}, "Error initializing offscreen buffer. More details in the console")
             return {'CANCELLED'}
@@ -349,34 +349,34 @@ class SprytileGui(bpy.types.Operator):
             offscreen = gpu.offscreen.new(tex_size[0], tex_size[1], samples=0)
         except Exception as e:
             print(e)
-            SprytileGui.clear_offscreen(self)
+            SPRYTILE_OT_Gui.clear_offscreen(self)
             offscreen = None
 
-        SprytileGui.texture_grid = target_img
-        SprytileGui.tex_size = tex_size
-        SprytileGui.display_size = tex_size
-        SprytileGui.current_grid = grid_id
-        SprytileGui.loaded_grid = tilegrid
+        SPRYTILE_OT_Gui.texture_grid = target_img
+        SPRYTILE_OT_Gui.tex_size = tex_size
+        SPRYTILE_OT_Gui.display_size = tex_size
+        SPRYTILE_OT_Gui.current_grid = grid_id
+        SPRYTILE_OT_Gui.loaded_grid = tilegrid
         self.get_zoom_level(context)
         return offscreen
 
     @staticmethod
     def clear_offscreen(self):
-        SprytileGui.texture = None
+        SPRYTILE_OT_Gui.texture = None
 
     @staticmethod
     def handler_add(self, context, region):
         space = bpy.types.SpaceView3D
-        SprytileGui.draw_callback = space.draw_handler_add(self.draw_callback_handler,
-                                                           (self, context, region),
+        SPRYTILE_OT_Gui.draw_callback = space.draw_handler_add(self.draw_callback_handler,
+                                                               (self, context, region),
                                                            'WINDOW', 'POST_PIXEL')
 
     @staticmethod
     def handler_remove(self, context):
         context.window.cursor_modal_restore()
-        if hasattr(SprytileGui, "draw_callback") and SprytileGui.draw_callback is not None:
-            bpy.types.SpaceView3D.draw_handler_remove(SprytileGui.draw_callback, 'WINDOW')
-        SprytileGui.draw_callback = None
+        if hasattr(SPRYTILE_OT_Gui, "draw_callback") and SPRYTILE_OT_Gui.draw_callback is not None:
+            bpy.types.SpaceView3D.draw_handler_remove(SPRYTILE_OT_Gui.draw_callback, 'WINDOW')
+        SPRYTILE_OT_Gui.draw_callback = None
 
     @staticmethod
     def draw_callback_handler(self, context, region):
@@ -394,11 +394,11 @@ class SprytileGui(bpy.types.Operator):
 
         middle_btn = context.scene.sprytile_ui.middle_btn
 
-        SprytileGui.draw_offscreen(context)
-        SprytileGui.draw_to_viewport(self.gui_min, self.gui_max, show_extra,
-                                     self.label_counter, tilegrid, sprytile_data,
-                                     context.scene.cursor_location, region, rv3d,
-                                     middle_btn, context)
+        SPRYTILE_OT_Gui.draw_offscreen(context)
+        SPRYTILE_OT_Gui.draw_to_viewport(self.gui_min, self.gui_max, show_extra,
+                                         self.label_counter, tilegrid, sprytile_data,
+                                         context.scene.cursor_location, region, rv3d,
+                                         middle_btn, context)
 
     @staticmethod
     def draw_selection(sel_min, sel_max, adjust=1):
@@ -417,9 +417,9 @@ class SprytileGui(bpy.types.Operator):
     @staticmethod
     def draw_offscreen(context):
         """Draw the GUI into the offscreen texture"""
-        offscreen = SprytileGui.offscreen
-        target_img = SprytileGui.texture_grid
-        tex_size = SprytileGui.tex_size
+        offscreen = SPRYTILE_OT_Gui.offscreen
+        target_img = SPRYTILE_OT_Gui.texture_grid
+        tex_size = SPRYTILE_OT_Gui.tex_size
 
         offscreen.bind()
         glClear(GL_COLOR_BUFFER_BIT)
@@ -454,7 +454,7 @@ class SprytileGui(bpy.types.Operator):
             glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, old_mag_filter)
 
         # Translate the gl context by grid matrix
-        grid_matrix = sprytile_utils.get_grid_matrix(SprytileGui.loaded_grid)
+        grid_matrix = sprytile_utils.get_grid_matrix(SPRYTILE_OT_Gui.loaded_grid)
         matrix_vals = [grid_matrix[j][i] for i in range(4) for j in range(4)]
         grid_buff = bgl.Buffer(bgl.GL_FLOAT, 16, matrix_vals)
 
@@ -466,13 +466,13 @@ class SprytileGui(bpy.types.Operator):
         glDisable(GL_TEXTURE_2D)
 
         # Get data for drawing additional overlays
-        grid_size = SprytileGui.loaded_grid.grid
-        padding = SprytileGui.loaded_grid.padding
-        margin = SprytileGui.loaded_grid.margin
-        curr_sel = SprytileGui.loaded_grid.tile_selection
-        is_pixel_grid = sprytile_utils.grid_is_single_pixel(SprytileGui.loaded_grid)
+        grid_size = SPRYTILE_OT_Gui.loaded_grid.grid
+        padding = SPRYTILE_OT_Gui.loaded_grid.padding
+        margin = SPRYTILE_OT_Gui.loaded_grid.margin
+        curr_sel = SPRYTILE_OT_Gui.loaded_grid.tile_selection
+        is_pixel_grid = sprytile_utils.grid_is_single_pixel(SPRYTILE_OT_Gui.loaded_grid)
         is_use_mouse = context.scene.sprytile_ui.use_mouse
-        is_selecting = SprytileGui.is_selecting
+        is_selecting = SPRYTILE_OT_Gui.is_selecting
 
         glLineWidth(1)
 
@@ -484,23 +484,23 @@ class SprytileGui(bpy.types.Operator):
         if draw_outline and is_selecting is False and not is_pixel_grid:
             if is_not_base_layer:
                 glColor4f(0.98, 0.94, 0.12, 1.0)
-            elif SprytileGui.is_moving:
+            elif SPRYTILE_OT_Gui.is_moving:
                 glColor4f(1.0, 0.0, 0.0, 1.0)
             else:
                 glColor4f(1.0, 1.0, 1.0, 1.0)
-            curr_sel_min, curr_sel_max = SprytileGui.get_sel_bounds(
+            curr_sel_min, curr_sel_max = SPRYTILE_OT_Gui.get_sel_bounds(
                                                     grid_size, padding, margin,
                                                     curr_sel[0], curr_sel[1],
                                                     curr_sel[2], curr_sel[3]
                                                 )
-            SprytileGui.draw_selection(curr_sel_min, curr_sel_max)
+            SPRYTILE_OT_Gui.draw_selection(curr_sel_min, curr_sel_max)
 
         # Inside gui, draw appropriate selection for under mouse
-        if is_use_mouse and is_selecting is False and SprytileGui.cursor_grid_pos is not None:
+        if is_use_mouse and is_selecting is False and SPRYTILE_OT_Gui.cursor_grid_pos is not None:
 
-            cursor_pos = SprytileGui.cursor_grid_pos
+            cursor_pos = SPRYTILE_OT_Gui.cursor_grid_pos
             # In pixel grid, draw cross hair
-            if is_pixel_grid and SprytileGui.is_moving is False:
+            if is_pixel_grid and SPRYTILE_OT_Gui.is_moving is False:
                 glColor4f(1.0, 1.0, 1.0, 0.5)
                 glBegin(GL_LINE_STRIP)
                 glVertex2i(0, int(cursor_pos.y + 1))
@@ -512,11 +512,11 @@ class SprytileGui(bpy.types.Operator):
                 glVertex2i(int(cursor_pos.x + 1), tex_size[1])
                 glEnd()
             # Draw box around selection
-            elif SprytileGui.is_moving is False:
+            elif SPRYTILE_OT_Gui.is_moving is False:
                 glColor4f(1.0, 0.0, 0.0, 1.0)
-                cursor_min, cursor_max = SprytileGui.get_sel_bounds(grid_size, padding, margin,
-                                                                    int(cursor_pos.x), int(cursor_pos.y),)
-                SprytileGui.draw_selection(cursor_min, cursor_max)
+                cursor_min, cursor_max = SPRYTILE_OT_Gui.get_sel_bounds(grid_size, padding, margin,
+                                                                        int(cursor_pos.x), int(cursor_pos.y), )
+                SPRYTILE_OT_Gui.draw_selection(cursor_min, cursor_max)
 
         glPopMatrix()
         offscreen.unbind()
@@ -551,8 +551,8 @@ class SprytileGui(bpy.types.Operator):
         # For single pixel grids, use world pixel density
         if grid_size[0] == 1 or grid_size[1] == 1:
             display_grid = (
-                SprytileGui.loaded_grid.tile_selection[2],
-                SprytileGui.loaded_grid.tile_selection[3]
+                SPRYTILE_OT_Gui.loaded_grid.tile_selection[2],
+                SPRYTILE_OT_Gui.loaded_grid.tile_selection[3]
             )
         if display_grid[0] == 1 or display_grid[1] == 1:
             return
@@ -644,7 +644,7 @@ class SprytileGui(bpy.types.Operator):
 
         # Setup to draw grid into viewport
         offset_matrix = Matrix.Translation((view_min.x, view_min.y, 0))
-        grid_matrix = sprytile_utils.get_grid_matrix(SprytileGui.loaded_grid)
+        grid_matrix = sprytile_utils.get_grid_matrix(SPRYTILE_OT_Gui.loaded_grid)
         grid_matrix = Matrix.Scale(scale_factor[0], 4, Vector((1, 0, 0))) * Matrix.Scale(scale_factor[1], 4, Vector((0, 1, 0))) * grid_matrix
         calc_matrix = offset_matrix * grid_matrix
         matrix_vals = [calc_matrix[j][i] for i in range(4) for j in range(4)]
@@ -682,26 +682,26 @@ class SprytileGui(bpy.types.Operator):
                 glEnd()
 
         # Draw selected tile outline
-        sel_min, sel_max = SprytileGui.get_sel_bounds(grid_size, padding, margin,
-                                                      tile_selection[0], tile_selection[1],
-                                                      tile_selection[2], tile_selection[3])
+        sel_min, sel_max = SPRYTILE_OT_Gui.get_sel_bounds(grid_size, padding, margin,
+                                                          tile_selection[0], tile_selection[1],
+                                                          tile_selection[2], tile_selection[3])
         glColor4f(1.0, 1.0, 1.0, 1.0)
-        SprytileGui.draw_selection(sel_min, sel_max, 0)
+        SPRYTILE_OT_Gui.draw_selection(sel_min, sel_max, 0)
 
         glPopMatrix()
 
     @staticmethod
     def draw_preview_tile(context, region, rv3d):
-        if sprytile_modal.SprytileModalTool.no_undo is True:
+        if sprytile_modal.SPRYTILE_OT_ModalTool.no_undo is True:
             return
-        if sprytile_modal.SprytileModalTool.preview_verts is None:
+        if sprytile_modal.SPRYTILE_OT_ModalTool.preview_verts is None:
             return
-        if sprytile_modal.SprytileModalTool.preview_uvs is None:
+        if sprytile_modal.SPRYTILE_OT_ModalTool.preview_uvs is None:
             return
 
-        uv = sprytile_modal.SprytileModalTool.preview_uvs
-        world_verts = sprytile_modal.SprytileModalTool.preview_verts
-        is_quads = sprytile_modal.SprytileModalTool.preview_is_quads
+        uv = sprytile_modal.SPRYTILE_OT_ModalTool.preview_uvs
+        world_verts = sprytile_modal.SPRYTILE_OT_ModalTool.preview_verts
+        is_quads = sprytile_modal.SPRYTILE_OT_ModalTool.preview_is_quads
 
         # Turn the world vert positions into screen positions
         screen_verts = []
@@ -748,18 +748,18 @@ class SprytileGui(bpy.types.Operator):
         """Draw the offscreen texture into the viewport"""
 
         # Prepare some data that will be used for drawing
-        grid_size = SprytileGui.loaded_grid.grid
-        tile_sel = SprytileGui.loaded_grid.tile_selection
-        padding = SprytileGui.loaded_grid.padding
-        margin = SprytileGui.loaded_grid.margin
-        is_pixel = sprytile_utils.grid_is_single_pixel(SprytileGui.loaded_grid)
+        grid_size = SPRYTILE_OT_Gui.loaded_grid.grid
+        tile_sel = SPRYTILE_OT_Gui.loaded_grid.tile_selection
+        padding = SPRYTILE_OT_Gui.loaded_grid.padding
+        margin = SPRYTILE_OT_Gui.loaded_grid.margin
+        is_pixel = sprytile_utils.grid_is_single_pixel(SPRYTILE_OT_Gui.loaded_grid)
 
         # Draw work plane
-        SprytileGui.draw_work_plane(grid_size, sprytile_data, cursor_loc, region, rv3d, middle_btn)
+        SPRYTILE_OT_Gui.draw_work_plane(grid_size, sprytile_data, cursor_loc, region, rv3d, middle_btn)
 
         # Setup GL for drawing the offscreen texture
         bgl.glColor4f(1.0, 1.0, 1.0, 1.0)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, SprytileGui.texture)
+        bgl.glBindTexture(bgl.GL_TEXTURE_2D, SPRYTILE_OT_Gui.texture)
         # Backup texture settings
         old_mag_filter = Buffer(bgl.GL_INT, 1)
         glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, old_mag_filter)
@@ -779,7 +779,7 @@ class SprytileGui(bpy.types.Operator):
 
         # Draw the preview tile
         if middle_btn is False:
-            SprytileGui.draw_preview_tile(context, region, rv3d)
+            SPRYTILE_OT_Gui.draw_preview_tile(context, region, rv3d)
 
         # Calculate actual view size
         view_size = int(view_max.x - view_min.x), int(view_max.y - view_min.y)
@@ -790,8 +790,8 @@ class SprytileGui(bpy.types.Operator):
         bgl.glScissor(int(view_min.x) + scissor_box[0], int(view_min.y) + scissor_box[1], view_size[0], view_size[1])
 
         # Draw the tile select UI
-        SprytileGui.draw_tile_select_ui(view_min, view_max, view_size, SprytileGui.tex_size,
-                                        grid_size, tile_sel, padding, margin, show_extra, is_pixel)
+        SPRYTILE_OT_Gui.draw_tile_select_ui(view_min, view_max, view_size, SPRYTILE_OT_Gui.tex_size,
+                                            grid_size, tile_sel, padding, margin, show_extra, is_pixel)
 
         # restore opengl defaults
         bgl.glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3])
@@ -813,8 +813,8 @@ class SprytileGui(bpy.types.Operator):
                 return c * math.sqrt(1 - t * t) + b
             box_pad = font_size + (pad * 2)
             fade = label_counter
-            fade = ease_out_circ(fade, 0, SprytileGui.label_frames, SprytileGui.label_frames)
-            fade /= SprytileGui.label_frames
+            fade = ease_out_circ(fade, 0, SPRYTILE_OT_Gui.label_frames, SPRYTILE_OT_Gui.label_frames)
+            fade /= SPRYTILE_OT_Gui.label_frames
 
             bgl.glColor4f(0.0, 0.0, 0.0, 0.75 * fade)
             bgl.glBegin(bgl.GL_QUADS)
@@ -851,12 +851,10 @@ class SprytileGui(bpy.types.Operator):
 
 
 def register():
-    bpy.utils.register_module(__name__)
+    bpy.utils.register_class(SprytileGuiData)
+    bpy.utils.register_class(SPRYTILE_OT_Gui)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
-
-
-if __name__ == '__main__':
-    register()
+    bpy.utils.unregister_class(SprytileGuiData)
+    bpy.utils.unregister_class(SPRYTILE_OT_Gui)

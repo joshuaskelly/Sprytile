@@ -3,7 +3,7 @@ bl_info = {
     "author": "Jeiel Aranal",
     # Final version number must be two numerals to support x.x.00
     "version": (0, 4, 50),
-    "blender": (2, 7, 7),
+    "blender": (2, 80, 7),
     "description": "A utility for creating tile based low spec scenes with paint/map editor tools",
     "location": "View3D > UI panel > Sprytile",
     "wiki_url": "http://itch.sprytile.xyz",
@@ -22,7 +22,7 @@ if cmd_subfolder not in sys.path:
 locals_list = locals()
 if "bpy" in locals_list:
     from importlib import reload
-    reload(addon_updater_ops)
+    # reload(addon_updater_ops)
     reload(sprytile_gui)
     reload(sprytile_modal)
     reload(sprytile_panel)
@@ -38,7 +38,7 @@ else:
 
 import bpy
 import bpy.utils.previews
-from . import addon_updater_ops
+# from . import addon_updater_ops
 from bpy.props import *
 import rna_keymap_ui
 
@@ -61,7 +61,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
             self["normal_mode"] = 3
         return self["normal_mode"]
 
-    normal_mode = EnumProperty(
+    normal_mode: EnumProperty(
         items=[
             ("X", "X", "World X-Axis", 1),
             ("Y", "Y", "World Y-Axis", 2),
@@ -74,19 +74,19 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         get=get_normal
     )
 
-    lock_normal = BoolProperty(
+    lock_normal: BoolProperty(
         name="Lock",
         description="Lock axis used to create tiles",
         default=False
     )
 
-    snap_translate = BoolProperty(
+    snap_translate: BoolProperty(
         name="Snap Translate",
         description="Snap pixel translations to pixel grid",
         default=True
     )
 
-    paint_mode = EnumProperty(
+    paint_mode: EnumProperty(
         items=[
             ("PAINT", "Paint", "Advanced UV paint tools", 1),
             ("MAKE_FACE", "Build", "Only create new faces", 3),
@@ -114,7 +114,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
             self["show_tools"] = False
         return self["show_tools"]
 
-    show_tools = BoolProperty(
+    show_tools: BoolProperty(
         default=False,
         set=set_show_tools,
         get=get_show_tools
@@ -167,7 +167,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         is_running = self["is_running"]
         return self.get_dummy_actual(is_running)
 
-    set_paint_mode = BoolVectorProperty(
+    set_paint_mode: BoolVectorProperty(
         name="Set Paint Mode",
         description="Set Sprytile Tool Mode",
         size=4,
@@ -175,7 +175,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         get=get_dummy
     )
 
-    work_layer = EnumProperty(
+    work_layer: EnumProperty(
         items=[
             ("BASE", "Base", "Base layer", 1),
             ("DECAL_1", "Decal 1", "Decal layer 1", 2)
@@ -212,7 +212,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         out_value[set_idx] = True
         return out_value
 
-    set_work_layer = BoolVectorProperty(
+    set_work_layer: BoolVectorProperty(
         name="Work Layer",
         description="Layer for creating new faces",
         size=2,
@@ -220,7 +220,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         set=set_layer
     )
 
-    work_layer_mode = EnumProperty(
+    work_layer_mode: EnumProperty(
         items=[
             ("MESH_DECAL", "Mesh Decal", "Create an overlay mesh. More compatible but less performant.", 1),
             ("UV_DECAL", "UV Layer", "Use UV layers. More performant in engine but requires shader support.", 2)
@@ -230,7 +230,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         default="MESH_DECAL"
     )
 
-    mesh_decal_offset = FloatProperty(
+    mesh_decal_offset: FloatProperty(
         name="Decal Offset",
         description="Distance to offset mesh decal, to prevent z-fighting",
         default=0.002,
@@ -240,7 +240,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         subtype='DISTANCE',
     )
 
-    world_pixels = IntProperty(
+    world_pixels: IntProperty(
         name="World Pixel Density",
         description="How many pixels are displayed in one world unit",
         subtype='PIXEL',
@@ -249,31 +249,31 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         max=2048
     )
 
-    paint_normal_vector = FloatVectorProperty(
+    paint_normal_vector: FloatVectorProperty(
         name="Srpytile Last Paint Normal",
         description="Last saved painting normal used by Sprytile",
         subtype='DIRECTION',
         default=(0.0, 0.0, 1.0)
     )
 
-    paint_up_vector = FloatVectorProperty(
+    paint_up_vector: FloatVectorProperty(
         name="Sprytile Last Paint Up Vector",
         description="Last saved painting up vector used by Sprytile",
         subtype='DIRECTION',
         default=(0.0, 1.0, 0.0)
     )
 
-    uv_flip_x = BoolProperty(
+    uv_flip_x: BoolProperty(
         name="Flip X",
         description="Flip tile horizontally",
         default=False
     )
-    uv_flip_y = BoolProperty(
+    uv_flip_y: BoolProperty(
         name="Flip Y",
         description="Flip tile vertically",
         default=False
     )
-    mesh_rotate = FloatProperty(
+    mesh_rotate: FloatProperty(
         name="Grid Rotation",
         description="Rotation of tile",
         subtype='ANGLE',
@@ -285,7 +285,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         default=0.0
     )
 
-    cursor_snap = EnumProperty(
+    cursor_snap: EnumProperty(
         items=[
             ('VERTEX', "Vertex", "Snap cursor to nearest vertex", "SNAP_GRID", 1),
             ('GRID', "Grid", "Snap cursor to grid", "SNAP_VERTEX", 2)
@@ -294,12 +294,12 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         description="Sprytile cursor snap mode"
     )
 
-    cursor_flow = BoolProperty(
+    cursor_flow: BoolProperty(
         name="Cursor Flow",
         description="Cursor automatically follows mesh building",
         default=False
     )
-    paint_align = EnumProperty(
+    paint_align: EnumProperty(
         items=[
             ('TOP_LEFT', "Top Left", "", 1),
             ('TOP', "Top", "", 2),
@@ -368,43 +368,43 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
     def get_align_bottom(self):
         return self.get_align_toggle("bottom")
 
-    paint_align_top = BoolVectorProperty(
+    paint_align_top: BoolVectorProperty(
         name="Align",
         size=3,
         set=set_align_top,
         get=get_align_top
     )
-    paint_align_middle = BoolVectorProperty(
+    paint_align_middle: BoolVectorProperty(
         name="Align",
         size=3,
         set=set_align_middle,
         get=get_align_middle
     )
-    paint_align_bottom = BoolVectorProperty(
+    paint_align_bottom: BoolVectorProperty(
         name="Align",
         size=3,
         set=set_align_bottom,
         get=get_align_bottom
     )
 
-    paint_hinting = BoolProperty(
+    paint_hinting: BoolProperty(
         name="Hinting",
         description="Selected edge is used as X axis for UV mapping."
     )
-    paint_stretch_x = BoolProperty(
+    paint_stretch_x: BoolProperty(
         name="Stretch X",
         description="Stretch face over X axis of tile"
     )
-    paint_stretch_y = BoolProperty(
+    paint_stretch_y: BoolProperty(
         name="Stretch Y",
         description="Stretch face over Y axis of tile"
     )
-    paint_edge_snap = BoolProperty(
+    paint_edge_snap: BoolProperty(
         name="Snap To Edge",
         description="Snap UV vertices to edges of tile when close enough.",
         default=True
     )
-    edge_threshold = FloatProperty(
+    edge_threshold: FloatProperty(
         name="Threshold",
         description="Ratio of UV tile near to edge to apply snap",
         min=0.01,
@@ -413,48 +413,48 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         soft_max=0.5,
         default=0.35
     )
-    paint_uv_snap = BoolProperty(
+    paint_uv_snap: BoolProperty(
         name="UV Snap",
         default=True,
         description="Snap UV vertices to texture pixels"
     )
 
-    is_running = BoolProperty(
+    is_running: BoolProperty(
         name="Sprytile Running",
         description="Exit Sprytile tool"
     )
-    is_snapping = BoolProperty(
+    is_snapping: BoolProperty(
         name="Is Cursor Snap",
         description="Is cursor snapping currently activated"
     )
-    has_selection = BoolProperty(
+    has_selection: BoolProperty(
         name="Has selection",
         description="Is there a mesh element selected"
     )
-    is_grid_translate = BoolProperty(
+    is_grid_translate: BoolProperty(
         name="Is Grid Translate",
         description="Grid translate operator is running"
     )
-    show_extra = BoolProperty(
+    show_extra: BoolProperty(
         name="Extra UV Grid Settings",
         default=False
     )
-    show_overlay = BoolProperty(
+    show_overlay: BoolProperty(
         name="Show Grid Overlay",
         description="Show grid on tile selection UI",
         default=True
     )
-    outline_preview = BoolProperty(
+    outline_preview: BoolProperty(
         name="Outline Preview",
         description="Draw an outline on tile placement preview",
         default=True
     )
-    auto_merge = BoolProperty(
+    auto_merge: BoolProperty(
         name="Auto Merge",
         description="Automatically merge vertices when creating faces",
         default=True
     )
-    auto_join = BoolProperty(
+    auto_join: BoolProperty(
         name="Join Multi",
         description="Join multi tile faces when possible",
         default=False
@@ -470,7 +470,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
             self["auto_reload"] = False
         return self["auto_reload"]
 
-    auto_reload = BoolProperty(
+    auto_reload: BoolProperty(
         name="Auto",
         description="Automatically reload images every few seconds",
         default=False,
@@ -478,13 +478,13 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         get=get_reload
     )
 
-    fill_lock_transform = BoolProperty(
+    fill_lock_transform: BoolProperty(
         name="Lock Transforms",
         description="Filled faces keep current rotations",
         default=False,
     )
 
-    axis_plane_display = EnumProperty(
+    axis_plane_display: EnumProperty(
         items=[
             ('OFF', "Off", "Always Off", "RADIOBUT_OFF", 1),
             ('ON', "On", "Always On", "RADIOBUT_ON", 2),
@@ -495,13 +495,13 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         default='MIDDLE_MOUSE'
     )
 
-    axis_plane_settings = BoolProperty(
+    axis_plane_settings: BoolProperty(
         name="Axis Plane Settings",
         description="Show Work Plane Cursor settings",
         default=False
     )
 
-    axis_plane_size = IntVectorProperty(
+    axis_plane_size: IntVectorProperty(
         name="Plane Size",
         description="Size of the Work Plane Cursor",
         size=2,
@@ -510,7 +510,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         soft_min=1
     )
 
-    axis_plane_color = FloatVectorProperty(
+    axis_plane_color: FloatVectorProperty(
         name="Plane Color",
         description="Color Work Plane Cursor is drawn with",
         size=3,
@@ -518,7 +518,7 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
         subtype='COLOR'
     )
 
-    fill_plane_size = IntVectorProperty(
+    fill_plane_size: IntVectorProperty(
         name="Fill Plane Size",
         description="Size of the Fill Plane",
         size=2,
@@ -529,19 +529,19 @@ class SprytileSceneSettings(bpy.types.PropertyGroup):
 
 
 class SprytileMaterialGridSettings(bpy.types.PropertyGroup):
-    mat_id = StringProperty(
+    mat_id: StringProperty(
         name="Material Id",
         description="Name of the material this grid references",
         default=""
     )
-    id = IntProperty(
+    id: IntProperty(
         name="Grid ID",
         default=-1
     )
-    name = StringProperty(
+    name: StringProperty(
         name="Grid Name"
     )
-    grid = IntVectorProperty(
+    grid: IntVectorProperty(
         name="Size",
         description="Grid size, in pixels",
         min=1,
@@ -566,7 +566,7 @@ class SprytileMaterialGridSettings(bpy.types.PropertyGroup):
             self["padding"] = (0, 0)
         return self["padding"]
 
-    padding = IntVectorProperty(
+    padding: IntVectorProperty(
         name="Padding",
         description="Cell padding, in pixels",
         min=0,
@@ -577,7 +577,7 @@ class SprytileMaterialGridSettings(bpy.types.PropertyGroup):
         get=get_padding
     )
 
-    margin = IntVectorProperty(
+    margin: IntVectorProperty(
         name="Margin",
         description="Spacing between tiles (top, right, bottom, left)",
         min=0,
@@ -585,31 +585,31 @@ class SprytileMaterialGridSettings(bpy.types.PropertyGroup):
         subtype='XYZ',
         default=(0, 0, 0, 0)
     )
-    offset = IntVectorProperty(
+    offset: IntVectorProperty(
         name="Offset",
         description="Offset of the grid",
         subtype='TRANSLATION',
         size=2,
         default=(0, 0)
     )
-    rotate = FloatProperty(
+    rotate: FloatProperty(
         name="UV Rotation",
         description="Rotation of UV grid",
         subtype='ANGLE',
         unit='ROTATION',
         default=0.0
     )
-    tile_selection = IntVectorProperty(
+    tile_selection: IntVectorProperty(
         name="Tile Selection",
         size=4,
         default=(0, 0, 1, 1)
     )
-    auto_pad = BoolProperty(
+    auto_pad: BoolProperty(
         name="Auto Pad",
         description="Apply a subpixel padding to tiles of this grid",
         default=True
     )
-    auto_pad_offset = FloatProperty(
+    auto_pad_offset: FloatProperty(
         name="Pad Offset",
         description="Subpixel padding amount",
         default=0.05,
@@ -635,23 +635,23 @@ class SprytileMaterialData(bpy.types.PropertyGroup):
         if do_rebuild:
             bpy.ops.sprytile.build_grid_list()
 
-    mat_id = StringProperty(
+    mat_id: StringProperty(
         name="Material Id",
         description="Name of the material this grid references",
         default=""
     )
-    is_expanded = BoolProperty(
+    is_expanded: BoolProperty(
         default=True,
         description="Toggle tile material",
         get=get_expanded,
         set=set_expanded
     )
-    grids = CollectionProperty(type=SprytileMaterialGridSettings)
+    grids: CollectionProperty(type=SprytileMaterialGridSettings)
 
 
 class SprytileGridDisplay(bpy.types.PropertyGroup):
-    mat_id = StringProperty(default="")
-    grid_id = IntProperty(default=-1)
+    mat_id: StringProperty(default="")
+    grid_id: IntProperty(default=-1)
 
     def get_mat_name(self):
         if self.mat_id == "":
@@ -670,7 +670,7 @@ class SprytileGridDisplay(bpy.types.PropertyGroup):
         bpy.data.materials[self.mat_id].name = value
         bpy.ops.sprytile.validate_grids()
 
-    mat_name = StringProperty(
+    mat_name: StringProperty(
         get=get_mat_name,
         set=set_mat_name
     )
@@ -698,15 +698,15 @@ class SprytileGridList(bpy.types.PropertyGroup):
         if target_entry.grid_id != -1:
             bpy.context.object.sprytile_gridid = target_entry.grid_id
 
-    display = bpy.props.CollectionProperty(type=SprytileGridDisplay)
-    idx = IntProperty(
+    display: bpy.props.CollectionProperty(type=SprytileGridDisplay)
+    idx: IntProperty(
         default=0,
         get=get_idx,
         set=set_idx
     )
 
 
-class SprytilePropsSetup(bpy.types.Operator):
+class SPRYTILE_OT_PropsSetup(bpy.types.Operator):
     bl_idname = "sprytile.props_setup"
     bl_label = "Setup Sprytile data"
 
@@ -733,7 +733,7 @@ class SprytilePropsSetup(bpy.types.Operator):
         )
 
 
-class SprytilePropsTeardown(bpy.types.Operator):
+class SPRYTILE_OT_PropsTeardown(bpy.types.Operator):
     bl_idname = "sprytile.props_teardown"
     bl_label = "Remove Sprytile data"
     bl_description = "WARNING: This will clear all Sprytile data, tile grids will be lost. Continue?"
@@ -768,7 +768,7 @@ class SprytilePropsTeardown(bpy.types.Operator):
 class SprytileAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
-    preview_transparency = bpy.props.FloatProperty(
+    preview_transparency: bpy.props.FloatProperty(
         name="Preview Alpha",
         description="Transparency level of build preview cursor",
         default=0.8,
@@ -789,7 +789,7 @@ class SprytileAddonPreferences(bpy.types.AddonPreferences):
             self["tile_picker_key"] = 1
         return self["tile_picker_key"]
 
-    tile_picker_key = EnumProperty(
+    tile_picker_key: EnumProperty(
         items=[
             ("Alt", "Alt", "Press Alt to pick tiles", 1),
             ("Ctrl", "Ctrl", "Press Ctrl to pick tiles", 2),
@@ -815,7 +815,7 @@ class SprytileAddonPreferences(bpy.types.AddonPreferences):
             self["tile_sel_move_key"] = 1
         return self["tile_sel_move_key"]
 
-    tile_sel_move_key = EnumProperty(
+    tile_sel_move_key: EnumProperty(
         items=[
             ("Alt", "Alt", "Press Alt to move tile selection", 1),
             ("Ctrl", "Ctrl", "Press Ctrl to move tile selection", 2),
@@ -829,31 +829,31 @@ class SprytileAddonPreferences(bpy.types.AddonPreferences):
     )
 
     # addon updater preferences
-    auto_check_update = bpy.props.BoolProperty(
+    auto_check_update: bpy.props.BoolProperty(
         name="Auto-check for Update",
         description="If enabled, auto-check for updates using an interval",
         default=False,
     )
-    updater_intrval_months = bpy.props.IntProperty(
+    updater_intrval_months: bpy.props.IntProperty(
         name='Months',
         description="Number of months between checking for updates",
         default=0,
         min=0
     )
-    updater_intrval_days = bpy.props.IntProperty(
+    updater_intrval_days: bpy.props.IntProperty(
         name='Days',
         description="Number of days between checking for updates",
         default=7,
         min=0,
     )
-    updater_intrval_hours = bpy.props.IntProperty(
+    updater_intrval_hours: bpy.props.IntProperty(
         name='Hours',
         description="Number of hours between checking for updates",
         default=0,
         min=0,
         max=23
     )
-    updater_intrval_minutes = bpy.props.IntProperty(
+    updater_intrval_minutes: bpy.props.IntProperty(
         name='Minutes',
         description="Number of minutes between checking for updates",
         default=0,
@@ -867,7 +867,7 @@ class SprytileAddonPreferences(bpy.types.AddonPreferences):
         layout.prop(self, "preview_transparency")
 
         box = layout.box()
-        box.label("Keyboard Shortcuts")
+        box.label(text="Keyboard Shortcuts")
         box.prop(self, "tile_picker_key")
         box.prop(self, "tile_sel_move_key")
 
@@ -883,10 +883,10 @@ class SprytileAddonPreferences(bpy.types.AddonPreferences):
             col.context_pointer_set("keymap", km)
             rna_keymap_ui.draw_kmi([], kc, km, kmi, col, 0)
 
-        addon_updater_ops.update_settings_ui(self, context)
+        # addon_updater_ops.update_settings_ui(self, context)
 
 def setup_keymap():
-    km_array = sprytile_modal.SprytileModalTool.keymaps
+    km_array = sprytile_modal.SPRYTILE_OT_ModalTool.keymaps
     win_mgr = bpy.context.window_manager
     key_config = win_mgr.keyconfigs.addon
 
@@ -906,7 +906,7 @@ def setup_keymap():
         km_items.new_modal('FLIP_X', 'THREE', 'PRESS'),
         km_items.new_modal('FLIP_Y', 'FOUR', 'PRESS')
     ]
-    sprytile_modal.SprytileModalTool.modal_values = [
+    sprytile_modal.SPRYTILE_OT_ModalTool.modal_values = [
         'Cancel',
         'Cursor Snap',
         'Cursor Focus',
@@ -918,15 +918,15 @@ def setup_keymap():
 
 
 def teardown_keymap():
-    for keymap in sprytile_modal.SprytileModalTool.keymaps:
+    for keymap in sprytile_modal.SPRYTILE_OT_ModalTool.keymaps:
         kmi_list = keymap.keymap_items
         for keymap_item in kmi_list:
             keymap.keymap_items.remove(keymap_item)
-    sprytile_modal.SprytileModalTool.keymaps.clear()
+    sprytile_modal.SPRYTILE_OT_ModalTool.keymaps.clear()
 
 
 def register():
-    addon_updater_ops.register(bl_info)
+    # addon_updater_ops.register(bl_info)
 
     sprytile_panel.icons = bpy.utils.previews.new()
     dirname = os.path.dirname(__file__)
@@ -944,17 +944,38 @@ def register():
         icon_path = os.path.join(icon_path, icon_paths[i])
         sprytile_panel.icons.load(icon_names[i], icon_path, 'IMAGE')
 
-    bpy.utils.register_class(sprytile_panel.SprytilePanel)
-    bpy.utils.register_module(__name__)
-    SprytilePropsSetup.props_setup()
+    # Register classes
+    bpy.utils.register_class(SprytileSceneSettings)
+    bpy.utils.register_class(SprytileMaterialGridSettings)
+    bpy.utils.register_class(SprytileMaterialData)
+    bpy.utils.register_class(SprytileGridDisplay)
+    bpy.utils.register_class(SprytileGridList)
+    bpy.utils.register_class(SPRYTILE_OT_PropsSetup)
+    bpy.utils.register_class(SPRYTILE_OT_PropsTeardown)
+    sprytile_gui.register()
+    sprytile_modal.register()
+    sprytile_panel.register()
+    sprytile_utils.register()
+
+    SPRYTILE_OT_PropsSetup.props_setup()
     setup_keymap()
 
 
 def unregister():
     teardown_keymap()
-    SprytilePropsTeardown.props_teardown()
-    bpy.utils.unregister_class(sprytile_panel.SprytilePanel)
-    bpy.utils.unregister_module(__name__)
+    SPRYTILE_OT_PropsTeardown.props_teardown()
+
+    bpy.utils.unregister_class(SprytileSceneSettings)
+    bpy.utils.unregister_class(SprytileMaterialGridSettings)
+    bpy.utils.unregister_class(SprytileMaterialData)
+    bpy.utils.unregister_class(SprytileGridDisplay)
+    bpy.utils.unregister_class(SprytileGridList)
+    bpy.utils.unregister_class(SPRYTILE_OT_PropsSetup)
+    bpy.utils.unregister_class(SPRYTILE_OT_PropsTeardown)
+    sprytile_gui.unregister()
+    sprytile_modal.unregister()
+    sprytile_panel.unregister()
+    sprytile_utils.unregister()
 
     bpy.utils.previews.remove(sprytile_panel.icons)
 
