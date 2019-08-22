@@ -36,8 +36,8 @@ def get_current_grid_vectors(scene, with_rotation=True):
 
     if with_rotation:
         rotation = Quaternion(-normal_vector, scene.sprytile_data.mesh_rotate)
-        up_vector = rotation * up_vector
-        right_vector = rotation * right_vector
+        up_vector = rotation @ up_vector
+        right_vector = rotation @ right_vector
 
     return up_vector, right_vector, normal_vector
 
@@ -215,7 +215,7 @@ def raycast_grid(scene, context, up_vector, right_vector, plane_normal, ray_orig
     :return: grid_position, x_vector, y_vector, plane_pos
     """
 
-    plane_pos = intersect_line_plane(ray_origin, ray_origin + ray_vector, scene.cursor_location, plane_normal)
+    plane_pos = intersect_line_plane(ray_origin, ray_origin + ray_vector, scene.cursor.location, plane_normal)
     # Didn't hit the plane exit
     if plane_pos is None:
         return None, None, None, None
@@ -226,7 +226,7 @@ def raycast_grid(scene, context, up_vector, right_vector, plane_normal, ray_orig
     grid_y = target_grid.grid[1]
 
     grid_position, x_vector, y_vector = get_grid_pos(
-                                            plane_pos, scene.cursor_location,
+                                            plane_pos, scene.cursor.location,
                                             right_vector.copy(), up_vector.copy(),
                                             world_pixels, grid_x, grid_y, as_coord
                                         )
@@ -477,7 +477,7 @@ class SPRYTILE_OT_AxisUpdate(bpy.types.Operator):
 
         # Get the up vector. The default scene view camera is pointed
         # downward, with up on Y axis. Apply view rotation to get current up
-        view_up_vector = rv3d.view_rotation * Vector((0.0, 1.0, 0.0))
+        view_up_vector = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
 
         view_vector = snap_vector_to_axis(view_vector, mirrored=True)
         view_up_vector = snap_vector_to_axis(view_up_vector)
@@ -1373,7 +1373,7 @@ class SPRYTILE_OT_GridTranslate(bpy.types.Operator):
         #                 vert_list.append(vert)
         #         if isinstance(sel, BMVert):
         #             vert_list.append(sel)
-        #         cursor_pos = context.scene.cursor_location
+        #         cursor_pos = context.scene.cursor.location
         #         for vert in vert_list:
         #             vert_offset = vert.co - cursor_pos
         #             vert_int = Vector((
@@ -1566,7 +1566,7 @@ class SPRYTILE_PT_WorkflowPanel(bpy.types.Panel):
         sub_row.prop(data, "axis_plane_display", expand=True)
 
         if data.axis_plane_settings:
-            addon_prefs = context.user_preferences.addons[__package__].preferences
+            addon_prefs = context.preferences.addons[__package__].preferences
             layout.prop(addon_prefs, "preview_transparency")
             layout.prop(data, "axis_plane_color")
             layout.prop(data, "axis_plane_size")

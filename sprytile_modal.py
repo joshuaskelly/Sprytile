@@ -78,7 +78,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
 
         # Get the up vector. The default scene view camera is pointed
         # downward, with up on Y axis. Apply view rotation to get current up
-        view_up_vector = rv3d.view_rotation * Vector((0.0, 1.0, 0.0))
+        view_up_vector = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
 
         plane_normal = sprytile_utils.snap_vector_to_axis(view_vector, mirrored=True)
         up_vector = sprytile_utils.snap_vector_to_axis(view_up_vector)
@@ -249,7 +249,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         face = self.bmesh.faces[face_index]
         world_verts = []
         for idx, vert in enumerate(face.verts):
-            vert_world_pos = context.object.matrix_world * vert.co
+            vert_world_pos = context.object.matrix_world @ vert.co
             world_verts.append(vert_world_pos)
         return world_verts
 
@@ -294,7 +294,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         """
         obj = context.object
 
-        ray_origin = Vector(context.scene.cursor_location.copy())
+        ray_origin = Vector(context.scene.cursor.location.copy())
         ray_origin += (x + 0.5) * right_vector
         ray_origin += (y + 0.5) * up_vector
 
@@ -311,8 +311,8 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         matrix = obj.matrix_world.copy()
         # get the ray relative to the object
         matrix_inv = matrix.inverted()
-        ray_origin_obj = matrix_inv * ray_origin
-        ray_target_obj = matrix_inv * (ray_origin + ray_direction)
+        ray_origin_obj = matrix_inv @ ray_origin
+        ray_target_obj = matrix_inv @ (ray_origin + ray_direction)
         ray_direction_obj = ray_target_obj - ray_origin_obj
 
         location, normal, face_index, distance = self.tree.ray_cast(ray_origin_obj, ray_direction_obj, ray_dist)
@@ -337,7 +337,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
             do_pass_through = True
 
         # Translate location back to world space
-        location = matrix * location
+        location = matrix @ location
 
         if do_pass_through:
             # add shift offset if passing through
@@ -346,7 +346,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
             return self.raycast_object(obj, new_ray_origin, ray_direction, work_layer_mask=work_layer_mask)
 
         if world_normal:
-            normal = matrix * normal
+            normal = matrix @ normal
         return location, normal, face_index, distance
 
     def update_bmesh_tree(self, context, update_index=False):
@@ -364,7 +364,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
                 el.ensure_lookup_table()
 
             self.bmesh.loops.layers.uv.verify()
-            self.bmesh.faces.layers.tex.verify()
+            #self.bmesh.faces.layers.tex.verify()
             self.bmesh = bmesh.from_edit_mesh(context.object.data)
         self.tree = BVHTree.FromBMesh(self.bmesh)
 
@@ -454,7 +454,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
                 return None
 
         # Calculate where the origin of the grid is
-        grid_origin = scene.cursor_location.copy()
+        grid_origin = scene.cursor.location.copy()
         # If doing mesh decal, offset the grid origin
         if data.work_layer == 'DECAL_1':
             grid_origin += plane_normal * data.mesh_decal_offset
@@ -549,7 +549,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         world_inv = context.object.matrix_world.copy().inverted()
         for face_vtx in world_vertices:
             vtx = self.bmesh.verts.new(face_vtx)
-            vtx.co = world_inv * vtx.co
+            vtx.co = world_inv @ vtx.co
             face_vertices.append(vtx)
 
         face = self.bmesh.faces.new(face_vertices)
@@ -578,8 +578,8 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         # downward, with up on Y axis. Apply view rotation to get current up
 
         rv3d = context.region_data
-        view_up_vector = rv3d.view_rotation * Vector((0.0, 1.0, 0.0))
-        view_right_vector = rv3d.view_rotation * Vector((1.0, 0.0, 0.0))
+        view_up_vector = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
+        view_right_vector = rv3d.view_rotation @ Vector((1.0, 0.0, 0.0))
         data = context.scene.sprytile_data
 
         if self.bmesh is None or self.bmesh.faces is None:
@@ -599,10 +599,10 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
             if isinstance(selection, bmesh.types.BMEdge):
                 # Figure out which side of the face this edge is on
                 # selected edge is considered the bottom of the face
-                vtx1 = world_matrix * selection.verts[0].co.copy()
-                vtx2 = world_matrix * selection.verts[1].co.copy()
+                vtx1 = world_matrix @ selection.verts[0].co.copy()
+                vtx2 = world_matrix @ selection.verts[1].co.copy()
                 edge_center = (vtx1 + vtx2) / 2
-                face_center = world_matrix * face.calc_center_bounds()
+                face_center = world_matrix @ face.calc_center_bounds()
                 # Get the rough heading of the up vector
                 estimated_up = face_center - edge_center
                 estimated_up.normalize()
@@ -630,8 +630,8 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         for edge in face.edges:
             idx += 1
             # Move vertices to world space
-            vtx1 = world_matrix * edge.verts[0].co
-            vtx2 = world_matrix * edge.verts[1].co
+            vtx1 = world_matrix @ edge.verts[0].co
+            vtx2 = world_matrix @ edge.verts[1].co
             edge_vec = vtx2 - vtx1
             edge_vec.normalize()
             edge_up_dot = 1 - abs(edge_vec.dot(view_up_vector))
@@ -677,8 +677,8 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
         layer_move *= (1 / context.scene.sprytile_data.world_pixels)
         plane_normal = scene.sprytile_data.paint_normal_vector.copy()
         plane_normal *= layer_move * direction
-        grid_position = scene.cursor_location + plane_normal
-        scene.cursor_location = grid_position
+        grid_position = scene.cursor.location + plane_normal
+        scene.cursor.location = grid_position
 
     def cursor_snap(self, context, event):
         if self.tree is None or context.scene.sprytile_ui.use_mouse is True:
@@ -704,7 +704,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
 
         # Snap cursor, depending on setting
         if scene.sprytile_data.cursor_snap == 'GRID':
-            location = intersect_line_plane(ray_origin, ray_origin + ray_vector, scene.cursor_location, plane_normal)
+            location = intersect_line_plane(ray_origin, ray_origin + ray_vector, scene.cursor.location, plane_normal)
             if location is None:
                 return
             world_pixels = scene.sprytile_data.world_pixels
@@ -713,16 +713,16 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
             grid_y = target_grid.grid[1]
 
             grid_position, x_vector, y_vector = sprytile_utils.get_grid_pos(
-                location, scene.cursor_location,
+                location, scene.cursor.location,
                 right_vector.copy(), up_vector.copy(),
                 world_pixels, grid_x, grid_y
             )
-            scene.cursor_location = grid_position
+            scene.cursor.location = grid_position
 
         elif scene.sprytile_data.cursor_snap == 'VERTEX':
             # Get if user is holding down tile picker modifier
             check_modifier = False
-            addon_prefs = context.user_preferences.addons[__package__].preferences
+            addon_prefs = context.preferences.addons[__package__].preferences
             if addon_prefs.tile_picker_key == 'Alt':
                 check_modifier = event.alt
             if addon_prefs.tile_picker_key == 'Ctrl':
@@ -738,7 +738,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
             # Location in world space, convert to object space
             matrix = context.object.matrix_world.copy()
             matrix_inv = matrix.inverted()
-            location, normal, face_index, dist = self.tree.find_nearest(matrix_inv * location)
+            location, normal, face_index, dist = self.tree.find_nearest(matrix_inv @ location)
             if location is None:
                 return
 
@@ -759,13 +759,13 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
                     closest_dist = test_dist
             # convert back to world space
             if closest_vtx != -1:
-                scene.cursor_location = matrix * face.verts[closest_vtx].co
+                scene.cursor.location = matrix @ face.verts[closest_vtx].co
 
             # If find face tile button pressed, set work plane normal too
             if check_modifier:
                 sprytile_data = context.scene.sprytile_data
                 # Check if mouse is hitting object
-                target_normal = context.object.matrix_world.to_quaternion() * normal
+                target_normal = context.object.matrix_world.to_quaternion() @ normal
                 face_up_vector, face_right_vector = self.get_face_up_vector(context, face_index, 0.4)
                 if face_up_vector is not None:
                     sprytile_data.paint_normal_vector = target_normal
@@ -818,8 +818,6 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
 
         # Refreshing the mesh, preview needs constantly refreshed
         # mesh or bad things seem to happen. This can potentially get expensive
-
-        print(self.refresh_mesh)
 
         if self.refresh_mesh or self.bmesh.is_valid is False or draw_preview:
             self.update_bmesh_tree(context, True)
@@ -914,7 +912,7 @@ class SPRYTILE_OT_ModalTool(bpy.types.Operator):
             return {'PASS_THROUGH'} if SPRYTILE_OT_ModalTool.no_undo else {'RUNNING_MODAL'}
         elif event.type == 'LEFTMOUSE':
             check_modifier = False
-            addon_prefs = context.user_preferences.addons[__package__].preferences
+            addon_prefs = context.preferences.addons[__package__].preferences
             if addon_prefs.tile_picker_key == 'Alt':
                 check_modifier = event.alt
             if addon_prefs.tile_picker_key == 'Ctrl':

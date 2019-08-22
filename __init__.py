@@ -766,7 +766,7 @@ class SPRYTILE_OT_PropsTeardown(bpy.types.Operator):
 
 
 class SprytileAddonPreferences(bpy.types.AddonPreferences):
-    bl_idname = __package__
+    bl_idname = __name__
 
     preview_transparency: bpy.props.FloatProperty(
         name="Preview Alpha",
@@ -945,6 +945,7 @@ def register():
         sprytile_panel.icons.load(icon_names[i], icon_path, 'IMAGE')
 
     # Register classes
+    bpy.utils.register_class(SprytileAddonPreferences)
     bpy.utils.register_class(SprytileSceneSettings)
     bpy.utils.register_class(SprytileMaterialGridSettings)
     bpy.utils.register_class(SprytileMaterialData)
@@ -965,6 +966,7 @@ def unregister():
     teardown_keymap()
     SPRYTILE_OT_PropsTeardown.props_teardown()
 
+    bpy.utils.unregister_class(SprytileAddonPreferences)
     bpy.utils.unregister_class(SprytileSceneSettings)
     bpy.utils.unregister_class(SprytileMaterialGridSettings)
     bpy.utils.unregister_class(SprytileMaterialData)

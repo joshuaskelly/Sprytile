@@ -208,7 +208,7 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
                 elif paint_mode == 'FILL':
                     cursor_data = 'SCROLL_XY'
 
-                addon_prefs = context.user_preferences.addons[__package__].preferences
+                addon_prefs = context.preferences.addons[__package__].preferences
                 if addon_prefs.tile_picker_key == 'Alt' and event.alt:
                     cursor_data = 'EYEDROPPER'
                 if addon_prefs.tile_picker_key == 'Ctrl' and event.ctrl:
@@ -239,7 +239,7 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
             tex_pos = Vector((ratio_pos.x * tex_size[0], ratio_pos.y * tex_size[1], 0))
             # Apply grid matrix to tex_pos
             grid_matrix = sprytile_utils.get_grid_matrix(SPRYTILE_OT_Gui.loaded_grid)
-            tex_pos = grid_matrix.inverted() * tex_pos
+            tex_pos = grid_matrix.inverted() @ tex_pos
 
             grid_max = Vector((ceil(tex_size[0]/tilegrid.grid[0])-1, ceil(tex_size[1]/tilegrid.grid[1])-1))
             cell_size = Vector((
@@ -253,7 +253,7 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
             SPRYTILE_OT_Gui.cursor_grid_pos = grid_pos
 
             if event.type == 'LEFTMOUSE' and event.value == 'PRESS' and SPRYTILE_OT_Gui.is_selecting is False:
-                addon_prefs = context.user_preferences.addons[__package__].preferences
+                addon_prefs = context.preferences.addons[__package__].preferences
                 move_mod_pressed = False
                 if addon_prefs.tile_sel_move_key == 'Alt':
                     move_mod_pressed = event.alt
@@ -346,7 +346,7 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
 
         import gpu
         try:
-            offscreen = gpu.offscreen.new(tex_size[0], tex_size[1], samples=0)
+            offscreen = gpu.types.GPUOffScreen(tex_size[0], tex_size[1], samples=0)
         except Exception as e:
             print(e)
             SPRYTILE_OT_Gui.clear_offscreen(self)
@@ -381,11 +381,16 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
     @staticmethod
     def draw_callback_handler(self, context, region):
         """Callback handler"""
-        if region.id is not context.region.id:
-            return
+        print('draw_callback_handler()')
+        if region is not context.region:
+            print('region is not context.region')
+            #return
+
         sprytile_data = context.scene.sprytile_data
         if sprytile_data.is_running is False:
+            print('sprytile_data.is_running is False')
             return
+
         show_extra = sprytile_data.show_extra or sprytile_data.show_overlay
         tilegrid = sprytile_utils.get_selected_grid(context)
 
@@ -397,7 +402,7 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
         SPRYTILE_OT_Gui.draw_offscreen(context)
         SPRYTILE_OT_Gui.draw_to_viewport(self.gui_min, self.gui_max, show_extra,
                                          self.label_counter, tilegrid, sprytile_data,
-                                         context.scene.cursor_location, region, rv3d,
+                                         context.scene.cursor.location, region, rv3d,
                                          middle_btn, context)
 
     @staticmethod
@@ -645,8 +650,8 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
         # Setup to draw grid into viewport
         offset_matrix = Matrix.Translation((view_min.x, view_min.y, 0))
         grid_matrix = sprytile_utils.get_grid_matrix(SPRYTILE_OT_Gui.loaded_grid)
-        grid_matrix = Matrix.Scale(scale_factor[0], 4, Vector((1, 0, 0))) * Matrix.Scale(scale_factor[1], 4, Vector((0, 1, 0))) * grid_matrix
-        calc_matrix = offset_matrix * grid_matrix
+        grid_matrix = Matrix.Scale(scale_factor[0], 4, Vector((1, 0, 0))) @ Matrix.Scale(scale_factor[1], 4, Vector((0, 1, 0))) @ grid_matrix
+        calc_matrix = offset_matrix @ grid_matrix
         matrix_vals = [calc_matrix[j][i] for i in range(4) for j in range(4)]
         grid_buff = bgl.Buffer(bgl.GL_FLOAT, 16, matrix_vals)
         glPushMatrix()
@@ -711,7 +716,7 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
                 return
             screen_verts.append(screen_vtx)
 
-        addon_prefs = context.user_preferences.addons[__package__].preferences
+        addon_prefs = context.preferences.addons[__package__].preferences
         preview_alpha = addon_prefs.preview_transparency
         sprytile_data = context.scene.sprytile_data
 
