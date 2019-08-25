@@ -381,13 +381,11 @@ class SPRYTILE_OT_Gui(bpy.types.Operator):
     @staticmethod
     def draw_callback_handler(self, context, region):
         """Callback handler"""
-        print('draw_callback_handler()')
-        if region is not context.region:
+        if region != context.region:
             return
 
         sprytile_data = context.scene.sprytile_data
         if sprytile_data.is_running is False:
-            print('sprytile_data.is_running is False')
             return
 
         show_extra = sprytile_data.show_extra or sprytile_data.show_overlay
