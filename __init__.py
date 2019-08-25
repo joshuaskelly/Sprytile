@@ -5,7 +5,7 @@ bl_info = {
     "version": (0, 4, 50),
     "blender": (2, 80, 7),
     "description": "A utility for creating tile based low spec scenes with paint/map editor tools",
-    "location": "View3D > UI panel > Sprytile",
+    "location": "View3D > Sidebar > Sprytile",
     "wiki_url": "http://itch.sprytile.xyz",
     "tracker_url": "https://github.com/ChemiKhazi/Sprytile/issues",
     "category": "Paint"
