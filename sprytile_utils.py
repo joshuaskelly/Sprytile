@@ -747,11 +747,9 @@ class SPRYTILE_OT_SetupMaterial(bpy.types.Operator):
         material.specular_intensity = 0
         material.use_nodes = True
 
-        # Remove default Principled BSDF shader
-        default_node = material.node_tree.nodes.get('Principled BSDF')
-
-        if default_node:
-            material.node_tree.nodes.remove(default_node)
+        # Remove any existing nodes
+        for node in material.node_tree.nodes[:]:
+            material.node_tree.nodes.remove(node)
 
         # Create an image texture node
         texture_node = material.node_tree.nodes.new('ShaderNodeTexImage')
@@ -764,7 +762,7 @@ class SPRYTILE_OT_SetupMaterial(bpy.types.Operator):
         emission_node.location = 300, 0
 
         # Output node
-        output_node = material.node_tree.nodes.get('Material Output')
+        output_node = material.node_tree.nodes.new('ShaderNodeOutputMaterial')
         output_node.location = 500, 0
         material.node_tree.links.new(texture_node.outputs[0], emission_node.inputs[0])
         material.node_tree.links.new(emission_node.outputs[0], output_node.inputs[0])
